@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ঘরের বাজার - Ghorer Bazar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Hind Siliguri', sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <!-- Notice Bar -->
+  <div id="noticeBar" class="bg-amber-400 text-emerald-950 text-xs sm:text-sm font-bold text-center py-1.5 px-4 hidden">
+    <span id="noticeText"></span>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="bg-emerald-600 text-white sticky top-0 z-40 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa-solid fa-house-chimney-window text-2xl text-amber-300"></i>
+        <span id="storeNameNav" class="text-2xl font-bold tracking-wide">ঘরের বাজার</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="toggleCart()" class="relative bg-emerald-700 hover:bg-emerald-800 p-2 rounded-full px-4 flex items-center gap-2">
+          <i class="fa-solid fa-cart-shopping"></i>
+          <span class="font-bold hidden sm:inline">কার্ট</span>
+          <span id="cartCount" class="bg-amber-400 text-emerald-950 font-extrabold rounded-full w-5 h-5 flex items-center justify-center text-xs">0</span>
+        </button>
+        <button id="userAuthBtn" onclick="toggleAuthModal()" class="bg-emerald-800 hover:bg-emerald-900 px-3 py-1.5 rounded-lg text-sm flex items-center gap-2">
+          <i class="fa-solid fa-user"></i>
+          <span id="authNavText">লগইন / সাইনআপ</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Banner -->
+  <div id="heroBannerContainer" class="max-w-7xl mx-auto px-4 pt-4 hidden">
+    <div class="bg-gradient-to-r from-emerald-800 to-emerald-600 text-white rounded-2xl p-6 sm:p-10 shadow-lg">
+      <h1 id="bannerTitle" class="text-2xl sm:text-4xl font-extrabold mb-2">ঘরের বাজারে স্বাগতম!</h1>
+      <p id="bannerSub" class="text-sm sm:text-lg opacity-90">আপনার প্রয়োজনীয় নিত্যদিনের সেরা পণ্যসমূহ কেনাকাটা করুন এক ক্লিকেই।</p>
+    </div>
+  </div>
+
+  <!-- Main Store -->
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    <!-- Search & Price Range Filter -->
+    <section class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
+      <div class="relative w-full md:w-1/2">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
+        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="পণ্য খুঁজুন..." class="w-full pl-9 pr-4 py-2 border rounded-xl outline-none focus:border-emerald-600 text-sm">
+      </div>
+      <div class="flex items-center gap-2 w-full md:w-auto">
+        <span class="text-xs font-bold text-gray-600 whitespace-nowrap">সর্বোচ্চ দাম:</span>
+        <input type="range" id="priceRange" min="0" max="10000" step="100" value="10000" oninput="updatePriceLabel(); applyFilters()" class="w-full md:w-48 accent-emerald-600">
+        <span id="priceRangeLabel" class="text-xs font-bold text-emerald-800 w-16">৳১০,০০০</span>
+      </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="mb-8">
+      <h2 class="text-xl font-bold mb-3 text-emerald-900">ক্যাটাগরি সমূহ</h2>
+      <div id="categoryContainer" class="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+        <button onclick="filterCategory('All')" class="cat-btn bg-emerald-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap shadow-sm">সব পণ্য</button>
+      </div>
+    </section>
+
+    <!-- Products -->
+    <section>
+      <h2 class="text-2xl font-bold mb-4 text-emerald-900">সকল পণ্যসমূহ</h2>
+      <div id="productGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+    </section>
+  </main>
+
+  <!-- Support Floating Widget -->
+  <div class="fixed bottom-5 right-5 z-40">
+    <button onclick="toggleSupportChat()" class="bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-full shadow-2xl flex items-center gap-2 transition-all transform hover:scale-105">
+      <i class="fa-solid fa-headset text-2xl"></i>
+      <span class="font-bold text-sm hidden sm:inline pr-1">কাস্টমার সাপোর্ট</span>
+    </button>
+  </div>
+
+  <!-- Support Chat Box -->
+  <div id="supportChatBox" class="fixed bottom-20 right-5 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl z-50 border hidden flex flex-col h-96">
+    <div class="bg-emerald-700 text-white p-3.5 rounded-t-2xl flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
+        <h4 class="font-bold text-sm">ঘরের বাজার সাপোর্ট টিম</h4>
+      </div>
+      <button onclick="toggleSupportChat()" class="text-white hover:text-gray-200"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="chatMessages" class="flex-1 p-3 overflow-y-auto space-y-2 bg-gray-50 text-xs sm:text-sm"></div>
+    <form onsubmit="sendCustomerMessage(event)" class="p-2 border-t flex gap-2 bg-white rounded-b-2xl">
+      <input type="text" id="chatInput" required placeholder="আপনার প্রশ্ন লিখুন..." class="flex-1 border rounded-lg px-3 py-1.5 text-xs sm:text-sm outline-none">
+      <button type="submit" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-700"><i class="fa-solid fa-paper-plane"></i></button>
+    </form>
+  </div>
+
+  <!-- Cart Modal -->
+  <div id="cartModal" class="fixed inset-0 bg-black/50 z-50 hidden flex justify-end">
+    <div class="bg-white w-full max-w-md h-full flex flex-col p-4 shadow-xl">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold">আপনার শপিং কার্ট</h3>
+        <button onclick="toggleCart()" class="text-gray-500 hover:text-black"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <div id="cartItemsList" class="flex-1 overflow-y-auto py-4 space-y-3"></div>
+      <div class="border-t pt-3 space-y-1">
+        <div class="flex justify-between text-sm text-gray-600">
+          <span>পণ্যের দাম:</span>
+          <span id="subTotal">৳0</span>
+        </div>
+        <div class="flex justify-between text-sm text-gray-600">
+          <span>ডেলিভারি চার্জ:</span>
+          <span id="delCharge">৳0</span>
+        </div>
+        <div class="flex justify-between font-bold text-lg pt-2 border-t text-emerald-900">
+          <span>সর্বমোট টাকা:</span>
+          <span id="cartTotalPrice">৳0</span>
+        </div>
+        <button onclick="openCheckoutModal()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 mt-2">অর্ডার কনফার্ম করুন</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checkout Modal -->
+  <div id="checkoutModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h3 class="text-xl font-bold text-emerald-900">অর্ডার কনফার্ম করুন</h3>
+        <button onclick="closeCheckoutModal()" class="text-gray-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <form id="checkoutForm" onsubmit="submitOrder(event)" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold mb-1">পূর্ণ নাম</label>
+          <input type="text" id="custName" required class="w-full border rounded-lg px-3 py-2 outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-1">মোবাইল নম্বর</label>
+          <input type="tel" id="custPhone" required class="w-full border rounded-lg px-3 py-2 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-sm font-semibold mb-1">জেলা</label>
+            <input type="text" id="custDistrict" required class="w-full border rounded-lg px-3 py-2 outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-1">থানা / এলাকা</label>
+            <input type="text" id="custThana" required class="w-full border rounded-lg px-3 py-2 outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-1">পূর্ণাঙ্গ ঠিকানা</label>
+          <textarea id="custFullAddress" required class="w-full border rounded-lg px-3 py-2 outline-none" rows="2"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-1">পেমেন্ট মেথড</label>
+          <select id="paymentMethod" onchange="toggleTrxField()" class="w-full border rounded-lg px-3 py-2 outline-none font-bold text-emerald-800">
+            <option value="Cash on Delivery">ক্যাশ অন ডেলিভারি (COD)</option>
+            <option value="bKash">বিকাশ (bKash Personal)</option>
+            <option value="Nagad">নগদ (Nagad Personal)</option>
+            <option value="Rocket">রকেট (Rocket Personal)</option>
+            <option value="Upay">উপায় (Upay Personal)</option>
+          </select>
+        </div>
+
+        <div id="paymentInstructions" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs sm:text-sm">
+          <p class="font-bold text-emerald-900 mb-1">পেমেন্ট করার নিয়ম:</p>
+          <p class="text-gray-700">নিচের নম্বরে সেন্ড মানি করে ট্রানজেকশন আইডি দিন:</p>
+          <div class="mt-2 bg-white border p-2 rounded-lg text-center">
+            <span class="text-gray-500 font-semibold">মার্চেন্ট পেমেন্ট নম্বর:</span>
+            <span id="activePayNumber" class="block font-black text-emerald-700 text-lg tracking-wider"></span>
+          </div>
+        </div>
+
+        <div id="trxFieldContainer" class="hidden">
+          <label class="block text-sm font-semibold mb-1 text-emerald-700">ট্রানজেকশন আইডি (TrxID)</label>
+          <input type="text" id="trxId" class="w-full border rounded-lg px-3 py-2 outline-none font-mono uppercase">
+        </div>
+        <button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 mt-2">অর্ডার সম্পন্ন করুন</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h3 id="authTitle" class="text-xl font-bold text-emerald-900">কাস্টমার লগইন</h3>
+        <button onclick="toggleAuthModal()" class="text-gray-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4">
+        <div id="nameFieldContainer" class="hidden">
+          <label class="block text-sm font-semibold mb-1">আপনার নাম</label>
+          <input type="text" id="authName" class="w-full border rounded-lg px-3 py-2 outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-1">মোবাইল নম্বর</label>
+          <input type="tel" id="authPhone" required class="w-full border rounded-lg px-3 py-2 outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-1">৪-ডিজিটের পিন পাসওয়ার্ড</label>
+          <input type="password" id="authPin" maxlength="4" required class="w-full border rounded-lg px-3 py-2 outline-none text-center text-lg tracking-widest">
+        </div>
+        <button type="submit" id="authSubmitBtn" class="w-full bg-emerald-600 text-white py-2.5 rounded-xl font-bold">লগইন করুন</button>
+      </form>
+      <div class="text-center mt-4 text-sm">
+        <span id="authToggleText">একাউন্ট নেই?</span> 
+        <button onclick="switchAuthMode()" class="text-emerald-600 font-bold underline ml-1">নতুন অ্যাকাউন্ট তৈরি করুন</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let products = JSON.parse(localStorage.getItem('sb_products')) || [
+      { id: 1, name: 'চাল ও ডালের কম্বো প্যাক', category: 'Grocery', price: 950, image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500', desc: 'সেরা চাল ও ডাল' },
+      { id: 2, name: 'সরিষার খাঁটি তেল (১ লিটার)', category: 'Oil', price: 220, image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=500', desc: '১০০% খাঁটি সরিষার তেল' }
+    ];
+    let categories = JSON.parse(localStorage.getItem('sb_categories')) || ['Grocery', 'Oil', 'Snacks', 'Beverage'];
+    let settings = JSON.parse(localStorage.getItem('sb_settings')) || {
+      storeName: 'ঘরের বাজার',
+      deliveryFee: 60,
+      bkash: '01700000000',
+      nagad: '01800000000',
+      rocket: '01900000000',
+      upay: '01600000000',
+      notice: 'ঘরের বাজারে স্বাগতম!',
+      showNotice: true,
+      bannerTitle: 'ঘরের বাজার - আস্থার জায়গা',
+      bannerSub: 'নিত্যপ্রয়োজনীয় জিনিস ঘরে বসেই অর্ডার করুন।',
+      showBanner: true
+    };
+
+    let cart = [];
+    let selectedCat = 'All';
+    let currentUser = JSON.parse(localStorage.getItem('sb_current_user')) || null;
+    let isSignupMode = false;
+
+    window.onload = () => {
+      applySettings();
+      renderCategories();
+      applyFilters();
+      updateCartCount();
+      checkUserLogin();
+      renderChatMessages();
+    };
+
+    function applySettings() {
+      document.getElementById('storeNameNav').innerText = settings.storeName || 'ঘরের বাজার';
+      if(settings.showNotice && settings.notice) {
+        document.getElementById('noticeBar').classList.remove('hidden');
+        document.getElementById('noticeText').innerText = settings.notice;
+      }
+      if(settings.showBanner) {
+        document.getElementById('heroBannerContainer').classList.remove('hidden');
+        document.getElementById('bannerTitle').innerText = settings.bannerTitle || '';
+        document.getElementById('bannerSub').innerText = settings.bannerSub || '';
+      }
+    }
+
+    function renderCategories() {
+      const container = document.getElementById('categoryContainer');
+      let html = `<button onclick="filterCategory('All')" class="cat-btn ${selectedCat === 'All' ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-700'} px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap shadow-sm">সব পণ্য</button>`;
+      categories.forEach(cat => {
+        const activeClass = selectedCat === cat ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-700';
+        html += `<button onclick="filterCategory('${cat}')" class="cat-btn ${activeClass} px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap hover:bg-emerald-100">${cat}</button>`;
+      });
+      container.innerHTML = html;
+    }
+
+    function updatePriceLabel() {
+      const val = document.getElementById('priceRange').value;
+      document.getElementById('priceRangeLabel').innerText = `৳${Number(val).toLocaleString()}`;
+    }
+
+    function applyFilters() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const maxPrice = Number(document.getElementById('priceRange').value);
+      const grid = document.getElementById('productGrid');
+
+      let filtered = products.filter(p => {
+        const matchesCat = selectedCat === 'All' || p.category === selectedCat;
+        const matchesSearch = p.name.toLowerCase().includes(search) || (p.desc && p.desc.toLowerCase().includes(search));
+        const matchesPrice = Number(p.price) <= maxPrice;
+        return matchesCat && matchesSearch && matchesPrice;
+      });
+
+      if(filtered.length === 0) {
+        grid.innerHTML = `<p class="col-span-full text-center py-10 text-gray-500">কোনো পণ্য পাওয়া যায়নি!</p>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(p => `
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden border flex flex-col hover:shadow-md transition">
+          <img src="${p.image}" class="w-full h-40 object-cover">
+          <div class="p-3 flex-1 flex flex-col justify-between">
+            <div>
+              <span class="text-xs text-emerald-600 font-bold uppercase">${p.category}</span>
+              <h3 class="font-bold text-sm mt-0.5 line-clamp-1">${p.name}</h3>
+              <p class="text-xs text-gray-500 mt-1 line-clamp-1">${p.desc || ''}</p>
+            </div>
+            <div class="mt-3 flex items-center justify-between">
+              <span class="font-extrabold text-emerald-700">৳${p.price}</span>
+              <button onclick="addToCart(${p.id})" class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg font-bold hover:bg-emerald-700">কার্টে নিন</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterCategory(cat) {
+      selectedCat = cat;
+      renderCategories();
+      applyFilters();
+    }
+
+    function addToCart(id) {
+      const product = products.find(p => p.id === id);
+      const existing = cart.find(item => item.id === id);
+      if(existing) existing.qty += 1;
+      else cart.push({...product, qty: 1});
+      updateCartCount();
+      alert('কার্টে যোগ করা হয়েছে!');
+    }
+
+    function updateCartCount() {
+      document.getElementById('cartCount').innerText = cart.reduce((sum, item) => sum + item.qty, 0);
+    }
+
+    function toggleCart() {
+      const modal = document.getElementById('cartModal');
+      modal.classList.toggle('hidden');
+      if(!modal.classList.contains('hidden')) renderCartItems();
+    }
+
+    function renderCartItems() {
+      const list = document.getElementById('cartItemsList');
+      if(cart.length === 0) {
+        list.innerHTML = `<p class="text-center text-gray-500 py-10">আপনার কার্ট খালি!</p>`;
+        document.getElementById('subTotal').innerText = `৳0`;
+        document.getElementById('delCharge').innerText = `৳0`;
+        document.getElementById('cartTotalPrice').innerText = `৳0`;
+        return;
+      }
+      let subtotal = 0;
+      list.innerHTML = cart.map(item => {
+        subtotal += item.price * item.qty;
+        return `
+          <div class="flex items-center justify-between border-b pb-2">
+            <div class="flex items-center gap-2">
+              <img src="${item.image}" class="w-10 h-10 object-cover rounded-lg">
+              <div>
+                <h4 class="font-bold text-sm">${item.name}</h4>
+                <p class="text-xs text-gray-500">৳${item.price} x ${item.qty}</p>
+              </div>
+            </div>
+            <button onclick="removeFromCart(${item.id})" class="text-red-500 text-sm"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        `;
+      }).join('');
+
+      const fee = Number(settings.deliveryFee) || 0;
+      document.getElementById('subTotal').innerText = `৳${subtotal}`;
+      document.getElementById('delCharge').innerText = `৳${fee}`;
+      document.getElementById('cartTotalPrice').innerText = `৳${subtotal + fee}`;
+    }
+
+    function removeFromCart(id) {
+      cart = cart.filter(item => item.id !== id);
+      updateCartCount();
+      renderCartItems();
+    }
+
+    function openCheckoutModal() {
+      if(cart.length === 0) return alert('কার্ট খালি!');
+      if(!currentUser) {
+        alert('অর্ডার করতে পিন পাসওয়ার্ড দিয়ে লগইন করুন!');
+        toggleCart();
+        toggleAuthModal();
+        return;
+      }
+      toggleCart();
+      document.getElementById('custName').value = currentUser.name || '';
+      document.getElementById('custPhone').value = currentUser.phone || '';
+      document.getElementById('checkoutModal').classList.remove('hidden');
+      toggleTrxField();
+    }
+
+    function closeCheckoutModal() { document.getElementById('checkoutModal').classList.add('hidden'); }
+
+    function toggleTrxField() {
+      const method = document.getElementById('paymentMethod').value;
+      const field = document.getElementById('trxFieldContainer');
+      const box = document.getElementById('paymentInstructions');
+      const numElem = document.getElementById('activePayNumber');
+
+      if(method !== 'Cash on Delivery') {
+        field.classList.remove('hidden');
+        box.classList.remove('hidden');
+        document.getElementById('trxId').required = true;
+
+        if(method === 'bKash') numElem.innerText = settings.bkash || 'নম্বর নাই';
+        else if(method === 'Nagad') numElem.innerText = settings.nagad || 'নম্বর নাই';
+        else if(method === 'Rocket') numElem.innerText = settings.rocket || 'নম্বর নাই';
+        else if(method === 'Upay') numElem.innerText = settings.upay || 'নম্বর নাই';
+      } else {
+        field.classList.add('hidden');
+        box.classList.add('hidden');
+        document.getElementById('trxId').required = false;
+      }
+    }
+
+    function submitOrder(e) {
+      e.preventDefault();
+      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const fee = Number(settings.deliveryFee) || 0;
+
+      const orderData = {
+        id: 'ORD-' + Math.floor(100000 + Math.random() * 900000),
+        name: document.getElementById('custName').value,
+        phone: document.getElementById('custPhone').value,
+        district: document.getElementById('custDistrict').value,
+        thana: document.getElementById('custThana').value,
+        address: document.getElementById('custFullAddress').value,
+        payment: document.getElementById('paymentMethod').value,
+        trxId: document.getElementById('trxId').value || 'N/A',
+        items: cart,
+        total: subtotal + fee,
+        status: 'Pending',
+        date: new Date().toLocaleDateString()
+      };
+
+      let orders = JSON.parse(localStorage.getItem('sb_orders')) || [];
+      orders.push(orderData);
+      localStorage.setItem('sb_orders', JSON.stringify(orders));
+
+      alert('অর্ডার সফল হয়েছে! আইডি: ' + orderData.id);
+      cart = [];
+      updateCartCount();
+      closeCheckoutModal();
+    }
+
+    // Support Chat
+    function toggleSupportChat() { document.getElementById('supportChatBox').classList.toggle('hidden'); }
+
+    function sendCustomerMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if(!text) return;
+
+      let chatHistory = JSON.parse(localStorage.getItem('sb_chat_history')) || [];
+      chatHistory.push({ sender: 'Customer', name: currentUser ? currentUser.name : 'গেস্ট', text, time: new Date().toLocaleTimeString() });
+      localStorage.setItem('sb_chat_history', JSON.stringify(chatHistory));
+
+      input.value = '';
+      renderChatMessages();
+    }
+
+    function renderChatMessages() {
+      const chatHistory = JSON.parse(localStorage.getItem('sb_chat_history')) || [];
+      const chatBox = document.getElementById('chatMessages');
+      let html = `<div class="bg-emerald-100 text-emerald-900 p-2 rounded-xl max-w-[85%]">হ্যালো! কীভাবে সাহায্য করতে পারি?</div>`;
+      chatHistory.forEach(m => {
+        if(m.sender === 'Customer') {
+          html += `<div class="bg-emerald-600 text-white p-2 rounded-xl max-w-[85%] ml-auto">${m.text}</div>`;
+        } else {
+          html += `<div class="bg-gray-200 text-gray-900 p-2 rounded-xl max-w-[85%]">${m.text}</div>`;
+        }
+      });
+      chatBox.innerHTML = html;
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Auth
+    function toggleAuthModal() { document.getElementById('authModal').classList.toggle('hidden'); }
+    function switchAuthMode() {
+      isSignupMode = !isSignupMode;
+      document.getElementById('authTitle').innerText = isSignupMode ? 'নতুন অ্যাকাউন্ট' : 'কাস্টমার লগইন';
+      document.getElementById('authSubmitBtn').innerText = isSignupMode ? 'সাইন আপ' : 'লগইন';
+      document.getElementById('nameFieldContainer').classList.toggle('hidden', !isSignupMode);
+    }
+
+    function handleAuth(e) {
+      e.preventDefault();
+      const phone = document.getElementById('authPhone').value;
+      const pin = document.getElementById('authPin').value;
+      let users = JSON.parse(localStorage.getItem('sb_registered_users')) || [];
+
+      if(isSignupMode) {
+        const name = document.getElementById('authName').value;
+        if(users.find(u => u.phone === phone)) return alert('নম্বরটি আগে থেকেই নিবন্ধিত!');
+        const newUser = { name, phone, pin };
+        users.push(newUser);
+        localStorage.setItem('sb_registered_users', JSON.stringify(users));
+        currentUser = newUser;
+        localStorage.setItem('sb_current_user', JSON.stringify(currentUser));
+      } else {
+        const validUser = users.find(u => u.phone === phone && u.pin === pin);
+        if(!validUser) return alert('ভুল ফোন নম্বর বা পিন!');
+        currentUser = validUser;
+        localStorage.setItem('sb_current_user', JSON.stringify(currentUser));
+      }
+      checkUserLogin();
+      toggleAuthModal();
+      alert('সফল হয়েছে!');
+    }
+
+    function checkUserLogin() {
+      if(currentUser) {
+        document.getElementById('authNavText').innerText = currentUser.name;
+      }
+    }
+  </script>
+</body>
+</html>
